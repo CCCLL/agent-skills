@@ -1,0 +1,42 @@
+name: Validate Agent Skills
+
+on:
+  push:
+    paths:
+      - "skills/**/SKILL.md"
+      - ".github/workflows/validate-skills.yml"
+  pull_request:
+    paths:
+      - "skills/**/SKILL.md"
+      - ".github/workflows/validate-skills.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Agent Skills reference validator
+        run: python -m pip install --disable-pip-version-check "skills-ref==0.1.1"
+
+      - name: Validate skills
+        shell: bash
+        run: |
+          set -euo pipefail
+          for skill_dir in skills/*; do
+            if [[ -f "$skill_dir/SKILL.md" ]]; then
+              echo "Validating $skill_dir"
+              agentskills validate "$skill_dir"
+            fi
+          done
